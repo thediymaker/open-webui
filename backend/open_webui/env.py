@@ -489,6 +489,8 @@ OAUTH_SESSION_TOKEN_ENCRYPTION_KEY = os.environ.get(
     "OAUTH_SESSION_TOKEN_ENCRYPTION_KEY", WEBUI_SECRET_KEY
 )
 
+OAUTH_AUTHORIZATION_PARAMS = os.environ.get("OAUTH_AUTHORIZATION_PARAMS", "")
+
 ####################################
 # SCIM Configuration
 ####################################

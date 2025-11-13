@@ -66,6 +66,7 @@ from open_webui.env import (
     ENABLE_OAUTH_ID_TOKEN_COOKIE,
     ENABLE_OAUTH_EMAIL_FALLBACK,
     OAUTH_CLIENT_INFO_ENCRYPTION_KEY,
+    OAUTH_AUTHORIZATION_PARAMS,
 )
 from open_webui.utils.misc import parse_duration
 from open_webui.utils.auth import get_password_hash, create_token
@@ -1215,7 +1216,25 @@ class OAuthManager:
         client = self.get_client(provider)
         if client is None:
             raise HTTPException(404)
-        return await client.authorize_redirect(request, redirect_uri)
+        
+        # Parse additional authorization parameters from environment variable
+        # Format: "param1=value1&param2=value2" (URL-encoded query string)
+        authorize_kwargs = {}
+        if OAUTH_AUTHORIZATION_PARAMS:
+            try:
+                parsed_params = urllib.parse.parse_qs(
+                    OAUTH_AUTHORIZATION_PARAMS, 
+                    keep_blank_values=True
+                )
+                # Pass additional parameters as kwargs to authorize_redirect
+                # These will be included in the authorization URL
+                for key, value_list in parsed_params.items():
+                    if value_list and len(value_list) > 0:
+                        authorize_kwargs[key] = value_list[0]
+            except Exception as e:
+                log.warning(f"Failed to parse OAUTH_AUTHORIZATION_PARAMS: {e}")
+        
+        return await client.authorize_redirect(request, redirect_uri, **authorize_kwargs)
 
     async def handle_callback(self, request, provider, response):
         if provider not in OAUTH_PROVIDERS:
